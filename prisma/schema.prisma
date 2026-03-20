@@ -1,0 +1,445 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum TipoDocumento {
+  CC
+  CE
+  TI
+  PP
+  NIT
+}
+
+enum TipoPlaca {
+  Blanca
+  Amarilla
+}
+
+enum ColorVehiculo {
+  Blanco
+  Negro
+  Gris
+  Plateado
+  Rojo
+  Azul
+  Verde
+  Amarillo
+  Beige
+  Cafe
+  Naranja
+  Otro
+}
+
+enum CategoriaLicencia {
+  A1
+  A2
+  B1
+  B2
+  B3
+  C1
+  C2
+  C3
+}
+
+enum EstadoOrdenCompra {
+  PENDIENTE
+  APROBADA
+  RECHAZADA
+  EXPIRADA
+  CANCELADA
+}
+
+model Usuarios {
+  idUsuario            String         @id @db.VarChar(36)
+  idRol                String         @db.VarChar(36)
+  foto                 String?
+  tipoDoc              TipoDocumento?
+  numDocumento         String?        @unique @db.VarChar(20)
+  nombre               String         @db.VarChar(100)
+  telefono             String?        @db.VarChar(20)
+  correo               String         @unique @db.VarChar(100)
+  contrasena           String         @db.VarChar(255)
+  direccion            String?        @db.VarChar(255)
+  idCiudad             Int?
+  estado               Boolean
+  resetPasswordCode    String?        @db.VarChar(100)
+  resetPasswordExpires DateTime?
+
+  perfilCompleto Boolean @default(true)
+  authProvider   String  @default("local") @db.VarChar(20)
+
+  // Relaciones
+  rol              Roles        @relation(fields: [idRol], references: [idRol])
+  ciudad           Ciudades?    @relation(fields: [idCiudad], references: [idCiudad])
+  conductor        Conductores?
+  vehiculosPropios Vehiculos[]  @relation("VehiculoPropietario")
+  pasajes          Pasajes[]
+  ordenesCompra    OrdenCompra[]
+
+  @@map("Usuarios")
+}
+
+model Ciudades {
+  idCiudad     Int    @id @default(autoincrement())
+  nombreCiudad String @unique @db.VarChar(100)
+
+  // Relaciones
+  usuarios Usuarios[]
+
+  @@map("Ciudades")
+}
+
+model Roles {
+  idRol       String  @id @db.VarChar(36)
+  nombreRol   String  @unique @db.VarChar(50)
+  descripcion String? @db.Text
+  estado      Boolean
+
+  // Relaciones
+  usuarios      Usuarios[]
+  rolesPermisos RolesPermisos[]
+
+  @@map("Roles")
+}
+
+model Permisos {
+  idPermiso   String  @id @default(uuid()) @db.VarChar(36)
+  modulo      String  @db.VarChar(50)
+  nombre      String  @db.VarChar(100)
+  descripcion String? @db.Text
+  codigo      String  @unique @db.VarChar(50)
+
+  // Relaciones
+  rolesPermisos RolesPermisos[]
+
+  @@map("Permisos")
+}
+
+model RolesPermisos {
+  idRol     String @db.VarChar(36)
+  idPermiso String @db.VarChar(36)
+
+  // Relaciones
+  rol     Roles    @relation(fields: [idRol], references: [idRol], onDelete: Cascade)
+  permiso Permisos @relation(fields: [idPermiso], references: [idPermiso], onDelete: Cascade)
+
+  @@id([idRol, idPermiso])
+  @@map("RolesPermisos")
+}
+
+model TiposVehiculo {
+  idTipoVehiculo     String   @id @db.VarChar(36)
+  nombreTipoVehiculo String   @unique @db.VarChar(50)
+  descripcion        String?  @db.Text
+  estado             Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  // Relaciones
+  vehiculos Vehiculos[]
+
+  @@map("TiposVehiculo")
+}
+
+model MarcasVehiculos {
+  idMarcaVehiculo String   @id @db.VarChar(36)
+  nombreMarca     String   @unique @db.VarChar(50)
+  pais            String?  @db.VarChar(50)
+  estado          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relaciones
+  vehiculos Vehiculos[]
+
+  @@map("MarcasVehiculos")
+}
+
+model Vehiculos {
+  idVehiculo                  String    @id @db.VarChar(36)
+  idTipoVehiculo              String    @db.VarChar(36)
+  idMarcaVehiculo             String    @db.VarChar(36)
+  idPropietario               String?   @db.VarChar(36)
+  propietarioExternoNombre    String?   @db.VarChar(100)
+  propietarioExternoDocumento String?   @db.VarChar(20)
+  propietarioExternoTelefono  String?   @db.VarChar(20)
+  idConductorAsignado         String?   @db.VarChar(36)
+  placa                       String    @unique @db.VarChar(10)
+  tipoPlaca                   TipoPlaca @default(Blanca)
+  linea                       String    @db.VarChar(50)
+  modelo                      Int
+  color                       ColorVehiculo
+  fotoUrl                     String?   @db.VarChar(255)
+  capacidadPasajeros          Int
+  capacidadCarga              Decimal?  @db.Decimal(10, 2)
+  soatVencimiento             DateTime?
+  tecnomecanicaVencimiento    DateTime?
+  seguroVencimiento           DateTime?
+  estado                      Boolean   @default(true)
+  createdAt                   DateTime  @default(now())
+  updatedAt                   DateTime  @updatedAt
+
+  // Relaciones
+  tipoVehiculo      TiposVehiculo   @relation(fields: [idTipoVehiculo], references: [idTipoVehiculo])
+  marcaVehiculo     MarcasVehiculos @relation(fields: [idMarcaVehiculo], references: [idMarcaVehiculo])
+  propietario       Usuarios?       @relation("VehiculoPropietario", fields: [idPropietario], references: [idUsuario])
+  conductorAsignado Conductores?    @relation("VehiculoConductorAsignado", fields: [idConductorAsignado], references: [idConductor])
+  turnos            Turnos[]
+
+  @@index([idTipoVehiculo])
+  @@index([idMarcaVehiculo])
+  @@index([idPropietario])
+  @@index([idConductorAsignado])
+  @@index([placa])
+  @@map("Vehiculos")
+}
+
+model Ubicaciones {
+  id        Int      @id @default(autoincrement())
+  nombre    String   @db.VarChar(100)
+  direccion String   @db.VarChar(255)
+  latitud   Decimal? @db.Decimal(10, 8)
+  longitud  Decimal? @db.Decimal(11, 8)
+  estado    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("Ubicaciones")
+}
+
+model Ubicacion {
+  idUbicacion     String   @id @default(uuid()) @db.VarChar(36)
+  nombreUbicacion String   @db.VarChar(100)
+  direccion       String   @db.VarChar(255)
+  latitud         Decimal? @db.Decimal(10, 8)
+  longitud        Decimal? @db.Decimal(11, 8)
+  estado          Boolean  @default(true)
+
+  // Relaciones
+  origenes Origen[]
+  destinos Destino[]
+  paradas  Parada[]
+}
+
+model Origen {
+  idOrigen    String  @id @default(uuid()) @db.VarChar(36)
+  idUbicacion String  @db.VarChar(36)
+  descripcion String? @db.VarChar(255)
+
+  // Relaciones
+  ubicacion   Ubicacion @relation(fields: [idUbicacion], references: [idUbicacion], onDelete: Cascade)
+  rutasOrigen Ruta[]    @relation("RutasDesdeOrigen")
+}
+
+model Destino {
+  idDestino   String  @id @default(uuid()) @db.VarChar(36)
+  idUbicacion String  @db.VarChar(36)
+  descripcion String? @db.VarChar(255)
+
+  // Relaciones
+  ubicacion    Ubicacion @relation(fields: [idUbicacion], references: [idUbicacion], onDelete: Cascade)
+  rutasDestino Ruta[]    @relation("RutasHaciaDestino")
+}
+
+model Ruta {
+  idRuta         String   @id @default(uuid()) @db.VarChar(36)
+  idOrigen       String   @db.VarChar(36)
+  idDestino      String   @db.VarChar(36)
+  distancia      Decimal? @db.Decimal(10, 2)
+  observaciones  String?  @db.VarChar(100)
+  tiempoEstimado String?  @db.VarChar(10)
+  precioBase     Decimal? @db.Decimal(10, 2)
+  estado         String?  @db.VarChar(50)
+
+  // Relaciones
+  origen  Origen   @relation("RutasDesdeOrigen", fields: [idOrigen], references: [idOrigen], onDelete: Cascade)
+  destino Destino  @relation("RutasHaciaDestino", fields: [idDestino], references: [idDestino], onDelete: Cascade)
+  paradas Parada[]
+  turnos  Turnos[]
+}
+
+model Parada {
+  idParada    String   @id @default(uuid()) @db.VarChar(36)
+  idRuta      String   @db.VarChar(36)
+  idUbicacion String   @db.VarChar(36)
+  orden       Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  // Relaciones
+  ruta      Ruta      @relation(fields: [idRuta], references: [idRuta], onDelete: Cascade)
+  ubicacion Ubicacion @relation(fields: [idUbicacion], references: [idUbicacion], onDelete: Cascade)
+
+  @@index([idRuta])
+  @@index([idUbicacion])
+  @@map("Paradas")
+}
+
+model Conductores {
+  idConductor              String            @id @default(uuid()) @db.VarChar(36)
+  idUsuario                String            @db.VarChar(36)
+  numeroLicencia           String            @unique @db.VarChar(50)
+  categoriaLicencia        CategoriaLicencia
+  fechaVencimientoLicencia DateTime
+  observaciones            String?           @db.Text
+  estado                   Boolean           @default(true)
+  createdAt                DateTime          @default(now())
+  updatedAt                DateTime          @updatedAt
+
+  // Relaciones
+  usuario            Usuarios    @relation(fields: [idUsuario], references: [idUsuario], onDelete: Cascade)
+  turnos             Turnos[]
+  vehiculosAsignados Vehiculos[] @relation("VehiculoConductorAsignado")
+
+  @@unique([idUsuario])
+  @@index([idUsuario])
+  @@index([numeroLicencia])
+  @@map("Conductores")
+}
+
+model Turnos {
+  idTurno          String   @id @default(uuid()) @db.VarChar(36)
+  idConductor      String   @db.VarChar(36)
+  idVehiculo       String   @db.VarChar(36)
+  idRuta           String   @db.VarChar(36)
+  fecha            DateTime
+  hora             String   @db.VarChar(10)
+  estado           String   @default("Programado") @db.VarChar(20)
+  cuposDisponibles Int
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  // Relaciones
+  conductor   Conductores   @relation(fields: [idConductor], references: [idConductor], onDelete: Cascade)
+  vehiculo    Vehiculos     @relation(fields: [idVehiculo], references: [idVehiculo], onDelete: Cascade)
+  ruta        Ruta          @relation(fields: [idRuta], references: [idRuta], onDelete: Cascade)
+  pasajes     Pasajes[]
+  encomiendas Encomiendas[]
+  contrato    Contratos?
+  ordenesCompra OrdenCompra[]
+
+  @@index([idConductor])
+  @@index([idVehiculo])
+  @@index([idRuta])
+  @@index([fecha])
+  @@index([estado])
+  @@map("Turnos")
+}
+
+model Pasajes {
+  idPasaje          String   @id @default(uuid()) @db.VarChar(36)
+  idTurno           String   @db.VarChar(36)
+  idUsuario         String?  @db.VarChar(36)
+  idOrdenCompra     String?  @db.VarChar(36)
+  nombrePasajero    String   @db.VarChar(100)
+  documentoPasajero String?  @db.VarChar(20)
+  asiento           String?  @db.VarChar(10)
+  precio            Decimal  @db.Decimal(10, 2)
+  estado            String   @default("Confirmado") @db.VarChar(20)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  turno   Turnos    @relation(fields: [idTurno], references: [idTurno], onDelete: Cascade)
+  usuario Usuarios? @relation(fields: [idUsuario], references: [idUsuario])
+  ordenCompra OrdenCompra? @relation(fields: [idOrdenCompra], references: [idOrdenCompra])
+
+  @@index([idTurno])
+  @@index([idUsuario])
+  @@index([idOrdenCompra])
+  @@map("Pasajes")
+}
+
+model OrdenCompra {
+  idOrdenCompra     String           @id @default(uuid()) @db.VarChar(36)
+  idTurno           String           @db.VarChar(36)
+  idUsuario         String           @db.VarChar(36)
+  referenciaWompi   String           @unique @db.VarChar(80)
+  cantidadTiquetes  Int
+  precioUnitario    Decimal          @db.Decimal(10, 2)
+  total             Decimal          @db.Decimal(10, 2)
+  moneda            String           @default("COP") @db.VarChar(3)
+  estado            EstadoOrdenCompra @default(PENDIENTE)
+  correoPagador     String           @db.VarChar(120)
+  nombrePagador     String           @db.VarChar(100)
+  telefonoPagador   String?          @db.VarChar(20)
+  pasajeros         Json
+  wompiTransactionId String?         @db.VarChar(100)
+  wompiStatus       String?          @db.VarChar(30)
+  wompiPayload      Json?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  turno   Turnos   @relation(fields: [idTurno], references: [idTurno], onDelete: Cascade)
+  usuario Usuarios @relation(fields: [idUsuario], references: [idUsuario], onDelete: Cascade)
+  pasajes Pasajes[]
+
+  @@index([idTurno])
+  @@index([idUsuario])
+  @@index([estado])
+  @@map("OrdenesCompra")
+}
+
+model Encomiendas {
+  idEncomienda       String   @id @default(uuid()) @db.VarChar(36)
+  idTurno            String   @db.VarChar(36)
+  remitenteNombre    String   @db.VarChar(100)
+  remitenteTel       String   @db.VarChar(20)
+  destinatarioNombre String   @db.VarChar(100)
+  destinatarioTel    String   @db.VarChar(20)
+  descripcion        String   @db.Text
+  peso               Decimal? @db.Decimal(10, 2)
+  precio             Decimal  @db.Decimal(10, 2)
+  guia               String   @unique @db.VarChar(20)
+  fotoUrl            String?  @db.VarChar(255)
+  verificado         Boolean  @default(false)
+  estado             String   @default("Pendiente") @db.VarChar(20)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  turno Turnos @relation(fields: [idTurno], references: [idTurno], onDelete: Cascade)
+
+  @@index([idTurno])
+  @@index([guia])
+  @@map("Encomiendas")
+}
+
+model Contratos {
+  idContrato String @id @default(uuid()) @db.VarChar(36)
+  idTurno    String @unique @db.VarChar(36)
+
+  titularNombre    String  @db.VarChar(100)
+  titularDocumento String? @db.VarChar(20)
+
+  placa              String  @db.VarChar(10)
+  tipoVehiculo       String? @db.VarChar(50)
+  capacidadPasajeros Int?
+
+  origen       String   @db.VarChar(120)
+  destino      String   @db.VarChar(120)
+  fechaOrigen  DateTime
+  fechaDestino DateTime
+
+  pasajeros Json?
+
+  pdfUrl String @db.VarChar(255)
+
+  fechaContrato DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relaciones
+  turno Turnos @relation(fields: [idTurno], references: [idTurno], onDelete: Cascade)
+
+  @@index([placa])
+  @@index([fechaContrato])
+  @@map("Contratos")
+}
