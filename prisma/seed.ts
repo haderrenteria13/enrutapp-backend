@@ -104,6 +104,71 @@ async function main() {
     console.log(`Admin user already exists: ${adminEmail}`);
   }
 
+  // 4. Crear Marcas de Vehículos (Comunes en Colombia)
+  const marcasComunes = [
+    { nombreMarca: 'Chevrolet', pais: 'USA' },
+    { nombreMarca: 'Renault', pais: 'Francia' },
+    { nombreMarca: 'Mazda', pais: 'Japón' },
+    { nombreMarca: 'Toyota', pais: 'Japón' },
+    { nombreMarca: 'Kia', pais: 'Corea del Sur' },
+    { nombreMarca: 'Nissan', pais: 'Japón' },
+    { nombreMarca: 'Suzuki', pais: 'Japón' },
+    { nombreMarca: 'Volkswagen', pais: 'Alemania' },
+    { nombreMarca: 'Ford', pais: 'USA' },
+    { nombreMarca: 'Hyundai', pais: 'Corea del Sur' },
+    { nombreMarca: 'Mercedes-Benz', pais: 'Alemania' }, // Común en furgonetas tipo Sprinter
+    { nombreMarca: 'Hino', pais: 'Japón' },             // Común en buses/busetas
+  ];
+
+  for (const marca of marcasComunes) {
+    const existingMarca = await prisma.marcasVehiculos.findUnique({
+      where: { nombreMarca: marca.nombreMarca },
+    });
+
+    if (!existingMarca) {
+      await prisma.marcasVehiculos.create({
+        data: {
+          idMarcaVehiculo: uuidv4(),
+          nombreMarca: marca.nombreMarca,
+          pais: marca.pais,
+          estado: true,
+        },
+      });
+      console.log(`Marca created: ${marca.nombreMarca}`);
+    } else {
+      console.log(`Marca already exists: ${marca.nombreMarca}`);
+    }
+  }
+
+  // 5. Crear Tipos de Vehículo
+  const tiposVehiculo = [
+    { nombre: 'Camioneta / SUV', descripcion: 'Vehículo deportivo utilitario cerrado, común para viajes puerta a puerta.' },
+    { nombre: 'Microbús / Van', descripcion: 'Furgoneta o Van de pasajeros (Ej. Renault Trafic, Nissan Urvan) para transporte intermunicipal.' },
+    { nombre: 'Automóvil', descripcion: 'Vehículo sedán tradicional.' },
+    { nombre: 'Buseta', descripcion: 'Autobús pequeño de transporte público, ideal para rutas de media distancia.' },
+    { nombre: 'Autobús', descripcion: 'Bus grande para trayectos largos y alta capacidad de pasajeros.' },
+  ];
+
+  for (const tipo of tiposVehiculo) {
+    const existingTipo = await prisma.tiposVehiculo.findUnique({
+      where: { nombreTipoVehiculo: tipo.nombre },
+    });
+
+    if (!existingTipo) {
+      await prisma.tiposVehiculo.create({
+        data: {
+          idTipoVehiculo: uuidv4(),
+          nombreTipoVehiculo: tipo.nombre,
+          descripcion: tipo.descripcion,
+          estado: true,
+        },
+      });
+      console.log(`Tipo de Vehículo created: ${tipo.nombre}`);
+    } else {
+      console.log(`Tipo de Vehículo already exists: ${tipo.nombre}`);
+    }
+  }
+
   console.log('Database seeding completed.');
 }
 

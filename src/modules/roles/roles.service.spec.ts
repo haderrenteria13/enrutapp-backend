@@ -5,7 +5,7 @@ import { RolesService } from './roles.service';
 import { PrismaService } from '../../database/prisma.service';
 import { CreateRolDto, UpdateRolDto } from './dto';
 
-describe('RolesService', () => {
+describe('RolesService (Responsable: Camilo)', () => {
   let service: RolesService;
 
   const mockPrismaService = {

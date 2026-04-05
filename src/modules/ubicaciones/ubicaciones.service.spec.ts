@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { UbicacionesService } from './ubicaciones.service';
 import { PrismaService } from '../../database/prisma.service';
 
-describe('UbicacionesService', () => {
+describe('UbicacionesService (Responsable: Camilo)', () => {
   let service: UbicacionesService;
 
   const mockPrisma = {

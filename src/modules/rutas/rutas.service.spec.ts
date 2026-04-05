@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { RutasService } from './rutas.service';
 import { PrismaService } from '../../database/prisma.service';
 
-describe('RutasService', () => {
+describe('RutasService (Responsable: Camilo)', () => {
   let service: RutasService;
   let prisma: PrismaService;
 

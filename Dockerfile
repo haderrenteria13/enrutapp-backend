@@ -40,6 +40,9 @@ RUN npx prisma generate
 # --- ETAPA 3: Entorno de Ejecución (Runtime final) ---
 FROM node:22-alpine
 
+# Actualizar paquetes base para solucionar la vulnerabilidad CVE-2026-22184 (zlib)
+RUN apk upgrade --no-cache zlib
+
 # Etiquetamos nuestra imagen
 LABEL description="Backend EnrutApp NestJS" \
     version="1.0" \

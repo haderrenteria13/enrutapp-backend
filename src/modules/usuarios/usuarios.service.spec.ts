@@ -164,4 +164,75 @@ describe('UsuariosService', () => {
       expect(result.message).toBe('Usuario eliminado exitosamente');
     });
   });
+
+  describe('verificarPerfilCliente (Responsable: Hader)', () => {
+    it('debe retornar que el cliente debe completar su perfil si faltan datos', async () => {
+      const mockClienteIncompleto = {
+        ...mockUsuario,
+        rol: { nombreRol: 'Cliente' },
+        tipoDoc: null,
+      };
+      mockPrismaService.usuarios.findUnique.mockResolvedValue(mockClienteIncompleto);
+
+      const result = await service.verificarPerfilCliente(mockUsuario.idUsuario);
+
+      expect(result.success).toBe(true);
+      expect(result.data.esCliente).toBe(true);
+      expect(result.data.completado).toBe(false);
+    });
+
+    it('debe retornar que el cliente ya completó su perfil si tiene todos los datos', async () => {
+      const mockClienteCompleto = {
+        ...mockUsuario,
+        rol: { nombreRol: 'Cliente' },
+        tipoDoc: 'CC',
+        numDocumento: '123456',
+        telefono: '300000',
+        direccion: 'Calle 123',
+        idCiudad: 1,
+        perfilCompleto: true,
+      };
+      mockPrismaService.usuarios.findUnique.mockResolvedValue(mockClienteCompleto);
+
+      const result = await service.verificarPerfilCliente(mockUsuario.idUsuario);
+
+      expect(result.success).toBe(true);
+      expect(result.data.completado).toBe(true);
+    });
+  });
+
+  describe('completarPerfilCliente (Responsable: Hader)', () => {
+    it('debe completar el perfil del cliente exitosamente', async () => {
+      const mockCliente = {
+        ...mockUsuario,
+        rol: { nombreRol: 'Cliente' },
+      };
+      const dto = {
+        tipoDoc: 'CC',
+        numDocumento: '987654',
+        telefono: '3001234567',
+        direccion: 'Carrera 45',
+        idCiudad: 1,
+      };
+      mockPrismaService.usuarios.findUnique.mockResolvedValue(mockCliente);
+      mockPrismaService.ciudades.findUnique.mockResolvedValue({ idCiudad: 1 });
+      mockPrismaService.usuarios.findFirst.mockResolvedValue(null); // No duplicado
+      mockPrismaService.usuarios.update.mockResolvedValue({ ...mockCliente, ...dto, perfilCompleto: true });
+
+      const result = await service.completarPerfilCliente(mockUsuario.idUsuario, dto as any);
+
+      expect(result.success).toBe(true);
+      expect(mockPrismaService.usuarios.update).toHaveBeenCalled();
+    });
+
+    it('debe lanzar excepcion si tipoDoc es invalido', async () => {
+      const mockCliente = { ...mockUsuario, rol: { nombreRol: 'Cliente' } };
+      mockPrismaService.usuarios.findUnique.mockResolvedValue(mockCliente);
+      mockPrismaService.ciudades.findUnique.mockResolvedValue({ idCiudad: 1 });
+
+      const dto = { tipoDoc: 'INVALIDO', numDocumento: '123' };
+
+      await expect(service.completarPerfilCliente('id', dto as any)).rejects.toThrow(HttpException);
+    });
+  });
 });
