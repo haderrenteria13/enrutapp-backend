@@ -69,6 +69,9 @@ COPY --from=builder --chown=appuser:appgroup /app/dist ./dist
 # Creamos la carpeta de "uploads" para evitar errores de permisos 'EACCES mkdir'
 RUN mkdir -p /app/uploads && chown -R appuser:appgroup /app/uploads
 
+# Eliminar npm global para borrar las vulnerabilidades (MEDIUM) provenientes de sus subdependencias (picomatch, brace-expansion)
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx /opt/yarn*
+
 USER appuser
 
 EXPOSE 3000
