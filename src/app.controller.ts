@@ -1,7 +1,7 @@
 import { Controller, Get, Res } from '@nestjs/common';
 import { AppService } from './app.service';
 import { execSync } from 'child_process';
-import { Response } from 'express';
+import type { Response } from 'express';
 
 @Controller()
 export class AppController {
@@ -10,10 +10,11 @@ export class AppController {
   @Get('run-seed')
   runSeed(@Res() res: Response) {
     try {
-      const output = execSync('node dist/prisma/seed.js').toString();
-      return res.status(200).send(`<pre>Seed ejecutado con exito:\n${output}</pre>`);
+      const deployOutput = execSync('npx -y prisma migrate deploy').toString();
+      const seedOutput = execSync('node dist/prisma/seed.js').toString();
+      return res.status(200).send(`<pre>Migraciones aplicadas:\n${deployOutput}\n\nSeed ejecutado con exito:\n${seedOutput}</pre>`);
     } catch (error) {
-      return res.status(500).send(`<pre>Error ejecutando seed:\n${error.message}\n${error.stdout?.toString()}</pre>`);
+      return res.status(500).send(`<pre>Error:\n${error.message}\n\nSalida (Stdout):\n${error.stdout?.toString()}</pre>`);
     }
   }
 
